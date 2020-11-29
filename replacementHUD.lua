@@ -1,13 +1,14 @@
 local localPlayer = entity.get_local_player();
 local playerResource = entity.get_player_resource();
 local scrW, scrH = client.screen_size();
+-- window's usage is {name, x position, y position, width, height, if the window width is changable}
 local windows = { {"watermark", 1660, 10, 250, 20, false }, {"keybinds", 10, 700, 200, 20, true}};
 local hold = { false, 0, 0, "", 0, 0, 0, 0, true };
 ui.new_label("LUA", "B", "\n\n")
 ui.new_label("LUA", "B", "---- Onion's LUA ----")
 ui.new_label("LUA", "B", "Header Color: ")
 local colors = { ui.new_color_picker("LUA", "B", "Header", 200, 103, 245, 255) };
-local controls = { ui.new_checkbox("LUA", "B", "Enabled", true), ui.new_checkbox("LUA", "B", "Override HUD", true) }
+local controls = { ui.new_checkbox("LUA", "B", "Enabled", true), ui.new_checkbox("LUA", "B", "Override HUD", true), ui.new_multiselect("LUA", "B", "HUD Features", "Watermark", "Keybinds", "Chatbox", "Weapons", "Health", "Spectator's List") }
 local keybindReferences = { {"Fake-Duck", false, ui.reference("rage", "other", "duck peek assist")}, {"Double-Tap", true, ui.reference("rage", "other", "double tap")}, {"Hideshots", true, ui.reference("aa", "other", "on shot anti-aim")}, {"LBY Flick", true, ui.reference("aa", "other", "fake peek")}, {"Slowwalk", true, ui.reference("aa", "other", "slow motion")}, {"Force Safe-Point", false, ui.reference("rage", "aimbot", "force safe point")}, {"Force Body-Aim", false, ui.reference("rage", "other", "force body aim")}, {"Blockbot", true, ui.reference("misc", "movement", "blockbot")}, {"Edge-Jump", true, ui.reference("misc", "movement", "jump at edge")}, {"Freecam", false, ui.reference("misc", "miscellaneous", "free look")} }
 local locationControls = {};
 local locationControlsVisible = true;
@@ -61,12 +62,14 @@ client.set_event_callback("paint", function()
     updateSettings(hold[9])
     
     if (ui.get(controls[1])) then
+        local enabledTable = ui.get(controls[3]);
+
         -- HUD Movement
         runWindowMovement();
 
         -- HUD Functions
-        drawWatermark();
-        drawKeybinds();
+        if (tableContains(enabledTable, "Watermark")) then drawWatermark(); end
+        if (tableContains(enabledTable, "Keybinds")) then drawKeybinds(); end
     end
 end)
 
@@ -80,6 +83,18 @@ function findWindow(name)
     end
 
     return 0;
+end
+
+function tableContains(table, string)
+    if (string == nil) then return end
+
+    for i = 1, #table do
+        if (table[i] == string) then
+            return true;
+        end
+    end
+
+    return false;
 end
 
 function runWindowMovement()
