@@ -1,8 +1,14 @@
 local localPlayer = entity.get_local_player();
 local playerResource = entity.get_player_resource();
 local scrW, scrH = client.screen_size();
+local csgo_weapons = require "gamesense/csgo_weapons"
+local images = require "gamesense/images"
+local js = panorama.open()
+local GameStateAPI = js.GameStateAPI
+local chatMSG = {};
+local avatars = {};
 -- window's usage is {name, x position, y position, width, height, if the window width is changable}
-local windows = { {"watermark", 1660, 10, 250, 20, false }, {"keybinds", 10, 700, 200, 20, true}};
+local windows = { {"watermark", 1660, 10, 250, 20, false }, {"keybinds", 10, 500, 200, 20, true}, {"chatbox", 25, 750, 350, 20, true}};
 local hold = { false, 0, 0, "", 0, 0, 0, 0, true };
 ui.new_label("LUA", "B", "\n\n")
 ui.new_label("LUA", "B", "---- Onion's LUA ----")
@@ -60,6 +66,9 @@ client.set_event_callback("paint", function()
 
     -- Update Position Settings
     updateSettings(hold[9])
+
+    -- UI Removal
+    handleUI();
     
     if (ui.get(controls[1])) then
         local enabledTable = ui.get(controls[3]);
@@ -70,6 +79,7 @@ client.set_event_callback("paint", function()
         -- HUD Functions
         if (tableContains(enabledTable, "Watermark")) then drawWatermark(); end
         if (tableContains(enabledTable, "Keybinds")) then drawKeybinds(); end
+        if (tableContains(enabledTable, "Chatbox")) then drawChatbox(); end
     end
 end)
 
@@ -128,6 +138,67 @@ function runWindowMovement()
     end
 end
 
+function handleUI()
+    if (ui.get(controls[2]) and ui.get(controls[1])) then
+        cvar.cl_draw_only_deathnotices:set_int(1)
+        cvar.cl_drawhud_force_radar:set_int(1)
+    else
+        cvar.cl_draw_only_deathnotices:set_int(0)
+        cvar.cl_drawhud_force_radar:set_int(0)
+    end
+end
+
+function drawChatbox()
+    local index = findWindow("chatbox");
+    if (index == nil) then return end
+
+    renderer.rectangle(windows[index][2], windows[index][3], windows[index][4], 2, ui.get(colors[1]));
+    renderer.rectangle(windows[index][2], 2 + windows[index][3], windows[index][4], 16, 20, 20, 20, 100);
+    renderer.text((windows[index][4] / 2) + windows[index][2], 10 + windows[index][3], 255, 255, 255, 255, "c", 0, "Chatbox")
+    local height = 25;
+
+    if (#chatMSG ~= nil) then
+        height = height + (#chatMSG * 22);
+
+        if (#chatMSG > 0) then
+            for i = 1, #chatMSG do
+                renderer.rectangle(windows[index][2], 22 + (20 * (i - 1)) + windows[index][3], 2, 16, ui.get(colors[1]))
+                renderer.rectangle(2 + windows[index][2], 22 + (20 * (i - 1)) + windows[index][3], windows[index][4] / 4, 16, 20, 20, 20, 100)
+                renderer.rectangle(windows[index][4] / 4 + 5 + windows[index][2], 22 + (20 * (i - 1)) + windows[index][3], (windows[index][4] / 4) * 3 - 5, 16, 20, 20, 20, 100)
+                renderer.text(((windows[index][4] / 4 + 5 + windows[index][2]) + (((windows[index][4] / 4) * 3 - 5) / 2)), (22 + (20 * (i - 1))) + 8 + windows[index][3], 255, 255, 255, 255, "c", (windows[index][4] / 4) * 3 - 15, chatMSG[i][2])
+                local avatarIndex;
+
+                for f = 1, #avatars do
+                    if (avatars[f][1] == chatMSG[i][3]) then
+                        avatarIndex = f;
+                    end
+                end
+
+                if (avatarIndex == nil) then
+                    if (chatMSG[i][3] ~= "" and chatMSG[i][3] ~= nil) then
+                        table.insert(avatars, {chatMSG[i][3], images.get_steam_avatar(chatMSG[i][3])});
+                        avatarIndex = #chatMSG;
+                    end
+                end
+
+                if (chatMSG[i][4] == 2) then -- T Side
+                    renderer.text(windows[index][2] + ((windows[index][4] / 4) / 2), (22 + (20 * (i - 1))) + 8 + windows[index][3], 255, 114, 43, 255, "c", 71, chatMSG[i][1])
+                elseif (chatMSG[i][4] == 3) then -- CT Side
+                    renderer.text(windows[index][2] + ((windows[index][4] / 4) / 2), (22 + (20 * (i - 1))) + 8 + windows[index][3], 43, 223, 255, 255, "c", 71, chatMSG[i][1])
+                else -- Spectators
+                    renderer.text(windows[index][2] + ((windows[index][4] / 4) / 2), (22 + (20 * (i - 1))) + 8 + windows[index][3], 200, 200, 200, 255, "c", 71, chatMSG[i][1])
+                end
+
+                if (avatars[avatarIndex][2] ~= nil) then
+                    avatars[avatarIndex][2]:draw(windows[index][2] - 20, 22 + (20 * (i - 1)) + windows[index][3], 16, 16, 255, 255, 255, 255, false, 'f')
+                end
+            end
+        end
+    end
+
+    windows[index][5] = height;
+end
+
 function drawWatermark()
     local index = findWindow("watermark");
     if (index == nil) then return end
@@ -155,7 +226,7 @@ function drawWatermark()
     local w, h = renderer.measure_text(nil, text)
     windows[index][4] = w + 12;
 
-    renderer.rectangle(windows[index][2], windows[index][3], windows[index][4], windows[index][5], 20, 20, 20, 150)
+    renderer.rectangle(windows[index][2], windows[index][3], windows[index][4], windows[index][5], 20, 20, 20, 100)
     renderer.rectangle(windows[index][2], windows[index][3], windows[index][4], 2, ui.get(colors[1]))
     renderer.text(windows[index][2] + (windows[index][4] / 2), windows[index][3] + 1 + ((windows[index][5] - 2) / 2), 255, 255, 255, 255, "c", 0, text)
 end
@@ -177,14 +248,14 @@ function drawKeybinds()
     local index = findWindow("keybinds");
     windows[index][5] = 25 + (#heldKeybinds * 18);
 
-    renderer.rectangle(windows[index][2], windows[index][3], windows[index][4], 20, 20, 20, 20, 150)
+    renderer.rectangle(windows[index][2], windows[index][3], windows[index][4], 20, 20, 20, 20, 100)
     renderer.rectangle(windows[index][2], windows[index][3], windows[index][4], 2, ui.get(colors[1]))
     renderer.text(windows[index][2] + (windows[index][4] / 2), windows[index][3] + 11, 255, 255, 255, 255, "c", 0, "Keybinds")
 
     local usedHeight = 25;
     if (#heldKeybinds > 0) then
         for i = 1, #heldKeybinds do
-            renderer.rectangle(windows[index][2], windows[index][3] + usedHeight, windows[index][4], 18, 20, 20, 20, 150)
+            renderer.rectangle(windows[index][2], windows[index][3] + usedHeight, windows[index][4], 18, 20, 20, 20, 100)
             renderer.rectangle(windows[index][2], windows[index][3] + usedHeight, 2, 18, ui.get(colors[1]))
             local w, h = renderer.measure_text("", heldKeybinds[i][1])
             renderer.text(windows[index][2] + 7, windows[index][3] + usedHeight + 9 - (h / 2), 255, 255, 255, 255, "", 0, heldKeybinds[i][1])
@@ -192,3 +263,20 @@ function drawKeybinds()
         end
     end
 end
+
+client.set_event_callback("player_chat", function(e)
+    if e.entity == nil then return end
+    local steamid = entity.get_steam64(e.entity);
+    local teamNum = entity.get_prop(playerResource, "m_iTeam", e.entity);
+    if (e.name == nil or e.text == nil or e.name == "" or e.text == "" or teamNum == nil) then return end
+    if (steamid == "" or steamid == nil) then
+        steamid = ""
+    end
+
+    if (#chatMSG < 6) then
+        table.insert(chatMSG, {e.name, e.text, steamid, teamNum})
+    else
+        table.remove(chatMSG, 1);
+        table.insert(chatMSG, {e.name, e.text, steamid, teamNum})
+    end
+end)
