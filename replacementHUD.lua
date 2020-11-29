@@ -80,23 +80,29 @@ swapPostionEdits();
 
 function handleText()
     if (ui.get(controls[2]) and ui.get(controls[1])) then
-        if (ui.get(controls[3]) or ui.get(controls[4]) and not typeHandler[1]) then
-            table.insert(typeHandler[2], 0x59);
+        if (ui.get(controls[4]) and not typeHandler[1]) then
             table.insert(typeHandler[2], 0x55);
+            typeHandler[1], typeHandler[4] = true, false;
+        end
+
+        if (ui.get(controls[3]) and not typeHandler[1]) then
+            table.insert(typeHandler[2], 0x59);
+            typeHandler[1], typeHandler[4] = true, true;
+        end
+
+        if (not tableContains(typeHandler[2], 0x08)) then
+            if (client.key_state(0x08)) then
+                table.insert(typeHandler[2], 0x08);
+                if (typeHandler[3] ~= nil and typeHandler[3] ~= "") then
+                    typeHandler[3] = typeHandler[3]:sub(1, -2)
+                end
+            end
         end
 
         if (not ui.get(controls[5])) then
-            if (ui.get(controls[3]) and not typeHandler[1]) then
-                typeHandler[1], typeHandler[4] = true, false;
-            elseif (ui.get(controls[4]) and not typeHandler[1]) then
-                typeHandler[1], typeHandler[4] = true, true;
-            end
-
             if (typeHandler[1]) then
                 for i = 1, #typeHandler[2] do
-                    if (typeHandler[2][i] == nil) then
-                        table.remove(typeHandler[2], i);
-                    else
+                    if (typeHandler[2][i] ~= nil) then
                         if (not client.key_state(typeHandler[2][i])) then
                             table.remove(typeHandler[2], i);
                         end
@@ -211,7 +217,7 @@ function handleUI()
         cvar.cl_draw_only_deathnotices:set_int(0)
         cvar.cl_drawhud_force_radar:set_int(0)
         client.exec("bind y messagemode")
-        client.exec("bind u messagemode")
+        client.exec("bind u messagemode2")
     end
 end
 
@@ -276,24 +282,27 @@ function drawChatbox()
         renderer.rectangle(2 + windows[index][2], windows[index][3] + height + 5, windows[index][4] / 4, 16, 20, 20, 20, 100)
         renderer.rectangle(windows[index][4] / 4 + 5 + windows[index][2], windows[index][3] + height + 5, (windows[index][4] / 4) * 3 - 5, 16, 20, 20, 20, 100)
 
-        if (not typeHandler[4]) then
+        if (typeHandler[4]) then
             renderer.text(2 + windows[index][2] + ((windows[index][4] / 4) / 2), windows[index][3] + height + 14, 255, 255, 255, 255, "c", 0, "Global")
         else
             renderer.text(2 + windows[index][2] + ((windows[index][4] / 4) / 2), windows[index][3] + height + 14, 255, 255, 255, 255, "c", 0, "Team")
         end
 
-        if (typeHandler[3] ~= "" and typeHandler[3] ~= nil) then
-            local textW, textH = renderer.measure_text("", typeHandler[3]);
-            renderer.text(7 + windows[index][2] + (windows[index][4] / 4) + (((windows[index][4] / 4) * 3) / 2), windows[index][3] + height + 14, 255, 255, 255, 255, "c", ((windows[index][4] / 4) * 3) - 10, typeHandler[3])
-
-            if (client.key_state(0x0D)) then
-                if (not typeHandler[4]) then
+        if (client.key_state(0x0D)) then
+            if (typeHandler[3] ~= "" and typeHandler[3] ~= nil) then
+                if (typeHandler[4]) then
                     client.exec("say " .. typeHandler[3]);
                 else
                     client.exec("say_team " .. typeHandler[3]);
                 end
-                typeHandler[1], typeHandler[2], typeHandler[3], typeHandler[4] = false, {}, "", false;
             end
+
+            typeHandler[1], typeHandler[2], typeHandler[3], typeHandler[4] = false, {}, "", false;
+        end
+
+        if (typeHandler[3] ~= "" and typeHandler[3] ~= nil) then
+            local textW, textH = renderer.measure_text("", typeHandler[3]);
+            renderer.text(7 + windows[index][2] + (windows[index][4] / 4) + (((windows[index][4] / 4) * 3) / 2), windows[index][3] + height + 14, 255, 255, 255, 255, "c", ((windows[index][4] / 4) * 3) - 10, typeHandler[3])
         end
     end
 
