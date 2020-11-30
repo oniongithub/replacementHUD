@@ -1,29 +1,28 @@
 local localPlayer = entity.get_local_player();
 local playerResource = entity.get_player_resource();
 local scrW, scrH = client.screen_size();
-local csgo_weapons = require "gamesense/csgo_weapons"
-local images = require "gamesense/images"
-local js = panorama.open()
-local GameStateAPI = js.GameStateAPI
+local csgo_weapons = require "gamesense/csgo_weapons";
+local images = require "gamesense/images";
 local chatMSG = {};
 local avatars = {};
--- window's usage is {name, x position, y position, width, height, if the window width is changable}
-local windows = { {"watermark", 1660, 10, 250, 20, false }, {"keybinds", 10, 500, 200, 20, true}, {"chatbox", 25, 750, 350, 20, true}};
+-- window's usage is {name, x position, y position, width, height, if the window width is changable, min width, max width}
+local windows = { {"watermark", 1660, 10, 250, 20, false }, {"keybinds", 10, 500, 200, 20, true, 100, 350}, {"chatbox", 25, 750, 350, 20, true, 200, 500}, {"spectatorlist", 1710, 500, 200, 20, true, 150, 350}};
 local hold = { false, 0, 0, "", 0, 0, 0, 0, true };
-ui.new_label("LUA", "B", "\n\n")
-ui.new_label("LUA", "B", "---- Onion's LUA ----")
-ui.new_label("LUA", "B", "Header Color: ")
+ui.new_label("LUA", "B", "\n\n");
+ui.new_label("LUA", "B", "---- Onion's LUA ----");
+ui.new_label("LUA", "B", "Header Color: ");
 local colors = { ui.new_color_picker("LUA", "B", "Header", 200, 103, 245, 255) };
-local keyTable = { {0x20, " "}, {0x30, "0"}, {0x31, "1"}, {0x32, "2"}, {0x33, "3"}, {0x34, "4"}, {0x35, "5"}, {0x36, "6"}, {0x37, "7"}, {0x38, "8"}, {0x39, "9"}, {0x41, "A"}, {0x42, "B"}, {0x43, "C"}, {0x44, "D"}, {0x45, "E"}, {0x46, "F"}, {0x47, "G"}, {0x48, "H"}, {0x49, "I"}, {0x4A, "J"}, {0x4B, "K"}, {0x4C, "L"}, {0x4D, "M"}, {0x4E, "N"}, {0x4F, "O"}, {0x50, "P"}, {0x51, "Q"}, {0x52, "R"}, {0x53, "S"}, {0x54, "T"}, {0x55, "U"}, {0x56, "V"}, {0x57, "W"}, {0x58, "X"}, {0x59, "Y"}, {0x5A, "Z"} };
-local controls = { ui.new_checkbox("LUA", "B", "Enabled", true), ui.new_checkbox("LUA", "B", "Override HUD", true), ui.new_hotkey("LUA", "B", "Global Chat Key", false, 0x59), ui.new_hotkey("LUA", "B", "Team Chat Key", false, 0x55), ui.new_hotkey("LUA", "B", "Stop Chatting Key", false, 0x12), ui.new_multiselect("LUA", "B", "HUD Features", "Watermark", "Keybinds", "Chatbox", "Weapons", "Health", "Spectator's List") }
-local keybindReferences = { {"Fake-Duck", false, ui.reference("rage", "other", "duck peek assist")}, {"Thirdperson", true, ui.reference("visuals", "effects", "force third person (alive)")}, {"Double-Tap", true, ui.reference("rage", "other", "double tap")}, {"Hideshots", true, ui.reference("aa", "other", "on shot anti-aim")}, {"LBY Flick", true, ui.reference("aa", "other", "fake peek")}, {"Slowwalk", true, ui.reference("aa", "other", "slow motion")}, {"Force Safe-Point", false, ui.reference("rage", "aimbot", "force safe point")}, {"Force Body-Aim", false, ui.reference("rage", "other", "force body aim")}, {"Blockbot", true, ui.reference("misc", "movement", "blockbot")}, {"Edge-Jump", true, ui.reference("misc", "movement", "jump at edge")}, {"Freecam", false, ui.reference("misc", "miscellaneous", "free look")} }
+local keyTable = { {0xBF, "/"}, {0x20, " "}, {0x30, "0"}, {0x31, "1"}, {0x32, "2"}, {0x33, "3"}, {0x34, "4"}, {0x35, "5"}, {0x36, "6"}, {0x37, "7"}, {0x38, "8"}, {0x39, "9"}, {0x41, "A"}, {0x42, "B"}, {0x43, "C"}, {0x44, "D"}, {0x45, "E"}, {0x46, "F"}, {0x47, "G"}, {0x48, "H"}, {0x49, "I"}, {0x4A, "J"}, {0x4B, "K"}, {0x4C, "L"}, {0x4D, "M"}, {0x4E, "N"}, {0x4F, "O"}, {0x50, "P"}, {0x51, "Q"}, {0x52, "R"}, {0x53, "S"}, {0x54, "T"}, {0x55, "U"}, {0x56, "V"}, {0x57, "W"}, {0x58, "X"}, {0x59, "Y"}, {0x5A, "Z"} };
+local controls = { ui.new_checkbox("LUA", "B", "Enabled", true), ui.new_checkbox("LUA", "B", "Override HUD", true), ui.new_checkbox("LUA", "B", "Enable Chat Input", false), ui.new_hotkey("LUA", "B", "Global Chat Key", false, 0x59), ui.new_hotkey("LUA", "B", "Team Chat Key", false, 0x55), ui.new_hotkey("LUA", "B", "Stop Chatting Key", false, 0x12), ui.new_multiselect("LUA", "B", "HUD Features", "Watermark", "Keybinds", "Chatbox", "Weapons", "Health", "Spectator's List") };
+local keybindReferences = { {"Fake-Duck", false, ui.reference("rage", "other", "duck peek assist")}, {"Thirdperson", true, ui.reference("visuals", "effects", "force third person (alive)")}, {"Double-Tap", true, ui.reference("rage", "other", "double tap")}, {"Hideshots", true, ui.reference("aa", "other", "on shot anti-aim")}, {"LBY Flick", true, ui.reference("aa", "other", "fake peek")}, {"Slowwalk", true, ui.reference("aa", "other", "slow motion")}, {"Force Safe-Point", false, ui.reference("rage", "aimbot", "force safe point")}, {"Force Body-Aim", false, ui.reference("rage", "other", "force body aim")}, {"Blockbot", true, ui.reference("misc", "movement", "blockbot")}, {"Edge-Jump", true, ui.reference("misc", "movement", "jump at edge")}, {"Freecam", false, ui.reference("misc", "miscellaneous", "free look")} };
 local locationControls = {};
 local locationControlsVisible = true;
+local spectatorList = {{nil, "penis"}};
 for i = 1, #windows do
     if (not windows[i][6]) then
-        table.insert(locationControls, {ui.new_label("LUA", "B", "---- " .. windows[i][1] .. " ----"), ui.new_slider("LUA", "B", windows[i][1] .. " X Axis", 0, scrW, windows[i][2]), ui.new_slider("LUA", "B", windows[i][1] .. " Y Axis", 0, scrH, windows[i][3])})
+        table.insert(locationControls, {ui.new_label("LUA", "B", "---- " .. windows[i][1] .. " ----"), ui.new_slider("LUA", "B", windows[i][1] .. " X Axis", 0, scrW, windows[i][2]), ui.new_slider("LUA", "B", windows[i][1] .. " Y Axis", 0, scrH, windows[i][3])});
     else
-        table.insert(locationControls, {ui.new_label("LUA", "B", "---- " .. windows[i][1] .. " ----"), ui.new_slider("LUA", "B", windows[i][1] .. " X Axis", 0, scrW, windows[i][2]), ui.new_slider("LUA", "B", windows[i][1] .. " Y Axis", 0, scrH, windows[i][3]), ui.new_slider("LUA", "B", windows[i][1] .. " Width", 0, scrW, windows[i][4])})
+        table.insert(locationControls, {ui.new_label("LUA", "B", "---- " .. windows[i][1] .. " ----"), ui.new_slider("LUA", "B", windows[i][1] .. " X Axis", 0, scrW, windows[i][2]), ui.new_slider("LUA", "B", windows[i][1] .. " Y Axis", 0, scrH, windows[i][3]), ui.new_slider("LUA", "B", windows[i][1] .. " Width", windows[i][7], windows[i][8], windows[i][4])});
     end
 end
 local typeHandler = {false, {}, "", false};
@@ -80,12 +79,12 @@ swapPostionEdits();
 
 function handleText()
     if (ui.get(controls[2]) and ui.get(controls[1])) then
-        if (ui.get(controls[4]) and not typeHandler[1]) then
+        if (ui.get(controls[5]) and not typeHandler[1]) then
             table.insert(typeHandler[2], 0x55);
             typeHandler[1], typeHandler[4] = true, false;
         end
 
-        if (ui.get(controls[3]) and not typeHandler[1]) then
+        if (ui.get(controls[4]) and not typeHandler[1]) then
             table.insert(typeHandler[2], 0x59);
             typeHandler[1], typeHandler[4] = true, true;
         end
@@ -99,7 +98,7 @@ function handleText()
             end
         end
 
-        if (not ui.get(controls[5])) then
+        if (not ui.get(controls[6])) then
             if (typeHandler[1]) then
                 for i = 1, #typeHandler[2] do
                     if (typeHandler[2][i] ~= nil) then
@@ -133,14 +132,15 @@ end
 
 client.set_event_callback("paint", function()
     localPlayer = entity.get_local_player();
-    if (localPlayer == nil) then return end
+    playerResource = entity.get_player_resource();
+    if (localPlayer == nil) then chatMSG = {}; avatars = {}; return end
 
     -- Handle some shit idk
     updateSettings(hold[9])
     handleUI();
 
     if (ui.get(controls[1])) then
-        local enabledTable = ui.get(controls[6]);
+        local enabledTable = ui.get(controls[7]);
 
         -- HUD Movement
         runWindowMovement();
@@ -148,7 +148,8 @@ client.set_event_callback("paint", function()
         -- HUD Functions
         if (tableContains(enabledTable, "Watermark")) then drawWatermark(); end
         if (tableContains(enabledTable, "Keybinds")) then drawKeybinds(); end
-        if (tableContains(enabledTable, "Chatbox")) then drawChatbox(); handleText(); end
+        if (tableContains(enabledTable, "Chatbox")) then drawChatbox(); if (ui.get(controls[3])) then handleText(); end end
+        if (tableContains(enabledTable, "Spectator's List")) then handleSpectators(); drawSpectatorList(); end
     end
 end)
 
@@ -229,6 +230,79 @@ function handleBinds()
     end
 end
 
+function handleAvatars(steamid)
+    local avatarIndex;
+
+    for f = 1, #avatars do
+        if (avatars[f][1] == steamid) then
+            avatarIndex = f;
+        end
+    end
+
+    if (avatarIndex == nil) then
+        if (steamid ~= "" and steamid ~= nil) then
+            table.insert(avatars, {steamid, images.get_steam_avatar(steamid)});
+            avatarIndex = #avatars;
+        end
+    end
+
+    return avatarIndex;
+end
+
+function handleSpectators()
+    local cachedSpectators = {}
+
+    for i = 1, globals.maxplayers() do
+        if (entity.get_classname(i) == "CCSPlayer") then
+            local observer = entity.get_prop(i, "m_hObserverTarget")
+            if (observer ~= nil) then       
+                local observerName = entity.get_player_name(i);
+                if (observerName == nil) then observerName = ""; end
+                local observerSteamID = entity.get_steam64(i);
+
+                if (observer == localPlayer) then
+                    if (not tableContains(cachedSpectators, {observer, observerName, observerSteamID})) then
+                        table.insert(cachedSpectators, {observer, observerName, observerSteamID});
+                    end
+                end
+            end
+        end
+    end
+
+    spectatorList = cachedSpectators;
+end
+
+function drawSpectatorList()
+    local index = findWindow("spectatorlist");
+    if (index == nil) then return end
+
+    renderer.rectangle(windows[index][2], windows[index][3], windows[index][4], 2, ui.get(colors[1]));
+    renderer.rectangle(windows[index][2], 2 + windows[index][3], windows[index][4], 16, 20, 20, 20, 100);
+    renderer.text((windows[index][4] / 2) + windows[index][2], 10 + windows[index][3], 255, 255, 255, 255, "c", 0, "Spectators")
+    local height = 25;
+
+    if (#spectatorList ~= nil) then
+        height = height + (#spectatorList * 22);
+
+        if (#spectatorList > 0) then
+            for i = 1, #spectatorList do
+                renderer.rectangle(windows[index][2], 22 + (20 * (i - 1)) + windows[index][3], 2, 16, ui.get(colors[1]))
+                renderer.rectangle(2 + windows[index][2], 22 + (20 * (i - 1)) + windows[index][3], windows[index][4] - 2, 16, 20, 20, 20, 100)
+                renderer.text(windows[index][2] + ((windows[index][4] - 2) / 2), (22 + (20 * (i - 1))) + 8 + windows[index][3], 255, 255, 255, 255, "c", windows[index][4] - 12, spectatorList[i][2])
+                local avatarIndex = handleAvatars(spectatorList[i][3]);
+
+                if (avatars[avatarIndex] ~= nil) then
+                    if (avatars[avatarIndex][2] ~= nil) then
+                        avatars[avatarIndex][2]:draw(windows[index][2] - 20, 22 + (20 * (i - 1)) + windows[index][3], 16, 16, 255, 255, 255, 255, false, 'f')
+                    end
+                end
+            end
+        end
+    end
+
+    windows[index][5] = height;
+end
+
 function drawChatbox()
     local index = findWindow("chatbox");
     if (index == nil) then return end
@@ -247,20 +321,7 @@ function drawChatbox()
                 renderer.rectangle(2 + windows[index][2], 22 + (20 * (i - 1)) + windows[index][3], windows[index][4] / 4, 16, 20, 20, 20, 100)
                 renderer.rectangle(windows[index][4] / 4 + 5 + windows[index][2], 22 + (20 * (i - 1)) + windows[index][3], (windows[index][4] / 4) * 3 - 5, 16, 20, 20, 20, 100)
                 renderer.text(((windows[index][4] / 4 + 5 + windows[index][2]) + (((windows[index][4] / 4) * 3 - 5) / 2)), (22 + (20 * (i - 1))) + 8 + windows[index][3], 255, 255, 255, 255, "c", (windows[index][4] / 4) * 3 - 15, chatMSG[i][2])
-                local avatarIndex;
-
-                for f = 1, #avatars do
-                    if (avatars[f][1] == chatMSG[i][3]) then
-                        avatarIndex = f;
-                    end
-                end
-
-                if (avatarIndex == nil) then
-                    if (chatMSG[i][3] ~= "" and chatMSG[i][3] ~= nil) then
-                        table.insert(avatars, {chatMSG[i][3], images.get_steam_avatar(chatMSG[i][3])});
-                        avatarIndex = #chatMSG;
-                    end
-                end
+                local avatarIndex = handleAvatars(chatMSG[i][3]);
 
                 if (chatMSG[i][4] == 2) then -- T Side
                     renderer.text(windows[index][2] + ((windows[index][4] / 4) / 2), (22 + (20 * (i - 1))) + 8 + windows[index][3], 255, 114, 43, 255, "c", 71, chatMSG[i][1])
@@ -270,39 +331,43 @@ function drawChatbox()
                     renderer.text(windows[index][2] + ((windows[index][4] / 4) / 2), (22 + (20 * (i - 1))) + 8 + windows[index][3], 200, 200, 200, 255, "c", 71, chatMSG[i][1])
                 end
 
-                if (avatars[avatarIndex][2] ~= nil) then
-                    avatars[avatarIndex][2]:draw(windows[index][2] - 20, 22 + (20 * (i - 1)) + windows[index][3], 16, 16, 255, 255, 255, 255, false, 'f')
+                if (avatars[avatarIndex] ~= nil) then
+                    if (avatars[avatarIndex][2] ~= nil) then
+                        avatars[avatarIndex][2]:draw(windows[index][2] - 20, 22 + (20 * (i - 1)) + windows[index][3], 16, 16, 255, 255, 255, 255, false, 'f')
+                    end
                 end
             end
         end
     end
 
-    if (typeHandler[1]) then
-        renderer.rectangle(windows[index][2], windows[index][3] + height + 5, 2, 16, ui.get(colors[1]))
-        renderer.rectangle(2 + windows[index][2], windows[index][3] + height + 5, windows[index][4] / 4, 16, 20, 20, 20, 100)
-        renderer.rectangle(windows[index][4] / 4 + 5 + windows[index][2], windows[index][3] + height + 5, (windows[index][4] / 4) * 3 - 5, 16, 20, 20, 20, 100)
+    if (ui.get(controls[3])) then
+        if (typeHandler[1]) then
+            renderer.rectangle(windows[index][2], windows[index][3] + height + 5, 2, 16, ui.get(colors[1]))
+            renderer.rectangle(2 + windows[index][2], windows[index][3] + height + 5, windows[index][4] / 4, 16, 20, 20, 20, 100)
+            renderer.rectangle(windows[index][4] / 4 + 5 + windows[index][2], windows[index][3] + height + 5, (windows[index][4] / 4) * 3 - 5, 16, 20, 20, 20, 100)
 
-        if (typeHandler[4]) then
-            renderer.text(2 + windows[index][2] + ((windows[index][4] / 4) / 2), windows[index][3] + height + 14, 255, 255, 255, 255, "c", 0, "Global")
-        else
-            renderer.text(2 + windows[index][2] + ((windows[index][4] / 4) / 2), windows[index][3] + height + 14, 255, 255, 255, 255, "c", 0, "Team")
-        end
-
-        if (client.key_state(0x0D)) then
-            if (typeHandler[3] ~= "" and typeHandler[3] ~= nil) then
-                if (typeHandler[4]) then
-                    client.exec("say " .. typeHandler[3]);
-                else
-                    client.exec("say_team " .. typeHandler[3]);
-                end
+            if (typeHandler[4]) then
+                renderer.text(2 + windows[index][2] + ((windows[index][4] / 4) / 2), windows[index][3] + height + 14, 255, 255, 255, 255, "c", 0, "Global")
+            else
+                renderer.text(2 + windows[index][2] + ((windows[index][4] / 4) / 2), windows[index][3] + height + 14, 255, 255, 255, 255, "c", 0, "Team")
             end
 
-            typeHandler[1], typeHandler[2], typeHandler[3], typeHandler[4] = false, {}, "", false;
-        end
+            if (client.key_state(0x0D)) then
+                if (typeHandler[3] ~= "" and typeHandler[3] ~= nil) then
+                    if (typeHandler[4]) then
+                        client.exec("say " .. typeHandler[3]);
+                    else
+                        client.exec("say_team " .. typeHandler[3]);
+                    end
+                end
 
-        if (typeHandler[3] ~= "" and typeHandler[3] ~= nil) then
-            local textW, textH = renderer.measure_text("", typeHandler[3]);
-            renderer.text(7 + windows[index][2] + (windows[index][4] / 4) + (((windows[index][4] / 4) * 3) / 2), windows[index][3] + height + 14, 255, 255, 255, 255, "c", ((windows[index][4] / 4) * 3) - 10, typeHandler[3])
+                typeHandler[1], typeHandler[2], typeHandler[3], typeHandler[4] = false, {}, "", false;
+            end
+
+            if (typeHandler[3] ~= "" and typeHandler[3] ~= nil) then
+                local textW, textH = renderer.measure_text("", typeHandler[3]);
+                renderer.text(7 + windows[index][2] + (windows[index][4] / 4) + (((windows[index][4] / 4) * 3) / 2), windows[index][3] + height + 14, 255, 255, 255, 255, "c", ((windows[index][4] / 4) * 3) - 10, typeHandler[3])
+            end
         end
     end
 
