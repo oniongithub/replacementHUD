@@ -249,6 +249,13 @@ function handleAvatars(steamid)
     return avatarIndex;
 end
 
+function round(x, n)
+    n = math.pow(10, n or 0)
+    x = x * n
+    if x >= 0 then x = math.floor(x + 0.5) else x = math.ceil(x - 0.5) end
+    return x / n
+end
+
 function handleSpectators()
     local cachedSpectators = {}
 
@@ -378,7 +385,7 @@ function drawWatermark()
     local index = findWindow("watermark");
     if (index == nil) then return end
 
-    local watermarkFlags = { {"", entity.get_player_name(localPlayer)}, {"hp", 0}, {"armor", 0}, {"ms", client.latency()} };
+    local watermarkFlags = { {"", entity.get_player_name(localPlayer)}, {"hp", 0}, {"armor", 0}, {"ms", round((client.latency() * 1000), 1)} };
 
     local healthProp = entity.get_prop(localPlayer, "m_iHealth");
     if (healthProp ~= nil) then
