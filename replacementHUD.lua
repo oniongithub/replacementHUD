@@ -260,7 +260,7 @@ function handleSpectators()
                 if (observerName == nil) then observerName = ""; end
                 local observerSteamID = entity.get_steam64(i);
 
-                if (observer == localPlayer) then
+                if (observer == localPlayer and not entity.is_alive(i)) then
                     if (not tableContains(cachedSpectators, {observer, observerName, observerSteamID})) then
                         table.insert(cachedSpectators, {observer, observerName, observerSteamID});
                     end
