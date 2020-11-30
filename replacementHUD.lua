@@ -222,14 +222,6 @@ function handleUI()
     end
 end
 
-function handleBinds()
-    if (ui.get(controls[2]) and ui.get(controls[1])) then
-
-    else
-
-    end
-end
-
 function handleAvatars(steamid)
     local avatarIndex;
 
