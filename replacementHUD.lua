@@ -6,9 +6,8 @@ local images = require "gamesense/images";
 local chatMSG = {};
 local avatars = {};
 -- window's usage is {name, x position, y position, width, height, if the window width is changable, min width, max width}
-local windows = { {"watermark", 1660, 10, 250, 20, false }, {"keybinds", 10, 500, 200, 20, true, 100, 350}, {"chatbox", 25, 750, 350, 20, true, 200, 500}, {"spectatorlist", 1710, 500, 200, 20, true, 150, 350}};
+local windows = { {"watermark", 1660, 10, 250, 20, false }, {"keybinds", 10, 500, 200, 20, true, 100, 350}, {"chatbox", 25, 750, 350, 20, true, 200, 500}, {"spectatorlist", 1710, 500, 200, 20, true, 150, 350}, {"health", 10, 1020, 150, 20, true, 150, 350}, {"weapon", 1710, 1020, 200, 20, true, 100, 350}};
 local hold = { false, 0, 0, "", 0, 0, 0, 0, true };
-ui.new_label("LUA", "B", "\n\n");
 ui.new_label("LUA", "B", "---- Onion's LUA ----");
 ui.new_label("LUA", "B", "Header Color: ");
 local colors = { ui.new_color_picker("LUA", "B", "Header", 200, 103, 245, 255) };
@@ -150,6 +149,8 @@ client.set_event_callback("paint", function()
         if (tableContains(enabledTable, "Keybinds")) then drawKeybinds(); end
         if (tableContains(enabledTable, "Chatbox")) then drawChatbox(); if (ui.get(controls[3])) then handleText(); end end
         if (tableContains(enabledTable, "Spectator's List")) then handleSpectators(); drawSpectatorList(); end
+        if (tableContains(enabledTable, "Health")) then drawHealth(); end
+        if (tableContains(enabledTable, "Weapons")) then drawWeapon(); end
     end
 end)
 
@@ -323,11 +324,11 @@ function drawChatbox()
                 local avatarIndex = handleAvatars(chatMSG[i][3]);
 
                 if (chatMSG[i][4] == 2) then -- T Side
-                    renderer.text(windows[index][2] + ((windows[index][4] / 4) / 2), (22 + (20 * (i - 1))) + 8 + windows[index][3], 255, 114, 43, 255, "c", 71, chatMSG[i][1])
+                    renderer.text(windows[index][2] + ((windows[index][4] / 4) / 2), (22 + (20 * (i - 1))) + 8 + windows[index][3], 255, 114, 43, 255, "c", (windows[index][4] / 4) - 10, chatMSG[i][1])
                 elseif (chatMSG[i][4] == 3) then -- CT Side
-                    renderer.text(windows[index][2] + ((windows[index][4] / 4) / 2), (22 + (20 * (i - 1))) + 8 + windows[index][3], 43, 223, 255, 255, "c", 71, chatMSG[i][1])
+                    renderer.text(windows[index][2] + ((windows[index][4] / 4) / 2), (22 + (20 * (i - 1))) + 8 + windows[index][3], 43, 223, 255, 255, "c", (windows[index][4] / 4) - 10, chatMSG[i][1])
                 else -- Spectators
-                    renderer.text(windows[index][2] + ((windows[index][4] / 4) / 2), (22 + (20 * (i - 1))) + 8 + windows[index][3], 200, 200, 200, 255, "c", 71, chatMSG[i][1])
+                    renderer.text(windows[index][2] + ((windows[index][4] / 4) / 2), (22 + (20 * (i - 1))) + 8 + windows[index][3], 200, 200, 200, 255, "c", (windows[index][4] / 4) - 10, chatMSG[i][1])
                 end
 
                 if (avatars[avatarIndex] ~= nil) then
@@ -373,6 +374,27 @@ function drawChatbox()
     windows[index][5] = height;
 end
 
+function drawWeapon()
+    local index = findWindow("weapon");
+    if (index == nil) then return end
+
+    local weaponEntity = entity.get_player_weapon(localPlayer)
+    if weaponEntity == nil then return end
+    
+    local weaponID = entity.get_prop(weaponEntity, "m_iItemDefinitionIndex")
+    if weaponID == nil then return end
+    
+    local curAmmo = entity.get_prop(weaponEntity, "m_iClip1")
+    if curAmmo == nil then curAmmo = 0; end
+
+    local weapon = csgo_weapons[weaponID]
+    if weapon ~= nil then
+        renderer.rectangle(windows[index][2], windows[index][3], windows[index][4], windows[index][5], 20, 20, 20, 100)
+        renderer.rectangle(windows[index][2], windows[index][3], windows[index][4], 2, ui.get(colors[1]))
+        renderer.text(windows[index][2] + (windows[index][4] / 2), windows[index][3] + (windows[index][5] / 2) + 2, 255, 255, 255, 255, "c", windows[index][4] - 8, weapon.name .. ", " .. curAmmo .. "/" .. weapon.primary_clip_size)
+    end
+end
+
 function drawWatermark()
     local index = findWindow("watermark");
     if (index == nil) then return end
@@ -403,6 +425,36 @@ function drawWatermark()
     renderer.rectangle(windows[index][2], windows[index][3], windows[index][4], windows[index][5], 20, 20, 20, 100)
     renderer.rectangle(windows[index][2], windows[index][3], windows[index][4], 2, ui.get(colors[1]))
     renderer.text(windows[index][2] + (windows[index][4] / 2), windows[index][3] + 1 + ((windows[index][5] - 2) / 2), 255, 255, 255, 255, "c", 0, text)
+end
+
+function drawHealth()
+    local index = findWindow("health");
+    if (index == nil) then return end
+
+    renderer.rectangle(windows[index][2], windows[index][3], windows[index][4], windows[index][5], 20, 20, 20, 100)
+    renderer.rectangle(windows[index][2], windows[index][3], windows[index][4], 2, ui.get(colors[1]))
+    renderer.text(windows[index][2] + (windows[index][4] / 2), windows[index][3] + 1 + ((windows[index][5] - 2) / 2), 255, 255, 255, 255, "c", 0, "Health Info")
+
+    local props = { { entity.get_prop(localPlayer, "m_iHealth"), "hp", {227, 68, 36, 255} }, { entity.get_prop(localPlayer, "m_ArmorValue"), "ar", {36, 179, 227, 255} } };
+
+    local height = 25;
+    for i = 1, #props do
+        if (props[i][1] ~= nil) then
+            renderer.rectangle(windows[index][2], windows[index][3] + height, windows[index][4], 16, 20, 20, 20, 100)
+            renderer.rectangle(windows[index][2], windows[index][3] + height, 2, 16, ui.get(colors[1]))
+            renderer.text(windows[index][2] + 7, windows[index][3] + height + 2, 255, 255, 255, 255, "", 50, props[i][2] .. " " .. props[i][1])
+
+            if (props[i][1] > 0) then
+                if (props[i][1] <= 100) then
+                    renderer.rectangle(windows[index][2] + 62, windows[index][3] + height + 6, (windows[index][4] - 67) * (props[i][1] / 100), 4, props[i][3][1], props[i][3][2], props[i][3][3], props[i][3][4])
+                else
+                    renderer.rectangle(windows[index][2] + 62, windows[index][3] + height + 6, windows[index][4] - 67, 4, props[i][3][1], props[i][3][2], props[i][3][3], props[i][3][4])
+                end
+            end
+
+            height = height + 22;
+        end
+    end
 end
 
 function drawKeybinds()
