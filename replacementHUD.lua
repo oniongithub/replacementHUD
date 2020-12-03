@@ -316,7 +316,7 @@ function drawScoreboard()
         local result = entity.get_prop(gameRules, "m_iMatchStats_RoundResults", i)
 
         if (result ~= 9 and result ~= 0) then
-            if (result <= 5) then
+            if (result <= 6 and result ~= 1) then
                 if (i < 15) then
                     teamOneWins = teamOneWins + 1;
                 else
