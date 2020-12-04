@@ -67,8 +67,13 @@ function updateSettings(saving)
             end
         else
             if (windows[i][2] ~= nil and windows[i][3] ~= nil) then
-                ui.set(locationControls[i][2], windows[i][2])
-                ui.set(locationControls[i][3], windows[i][3])
+                if (windows[i] > 0) then
+                    ui.set(locationControls[i][2], windows[i][2])
+                end
+
+                if (windows[i][3] > 0) then
+                    ui.set(locationControls[i][3], windows[i][3])
+                end
             end
         end
     end
