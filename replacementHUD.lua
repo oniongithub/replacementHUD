@@ -2,7 +2,7 @@ local localPlayer = entity.get_local_player();
 local playerResource = entity.get_player_resource();
 local gameRules = entity.get_game_rules();
 local scrW, scrH = client.screen_size();
-local csgo_weapons = require "gamesense/csgo_weapons";
+local weapons = require "gamesense/csgo_weapons";
 local images = require "gamesense/images";
 local chatMSG = {};
 local avatars = {};
@@ -453,7 +453,7 @@ function drawWeapon()
     local curAmmo = entity.get_prop(weaponEntity, "m_iClip1")
     if curAmmo == nil then curAmmo = 0; end
 
-    local weapon = csgo_weapons[weaponID]
+    local weapon = weapons[weaponID]
     if weapon ~= nil then
         renderer.rectangle(windows[index][2], windows[index][3], windows[index][4], windows[index][5], 20, 20, 20, 100)
         renderer.rectangle(windows[index][2], windows[index][3], windows[index][4], 2, ui.get(colors[1]))
