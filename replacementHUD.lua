@@ -2,8 +2,6 @@ local localPlayer = entity.get_local_player();
 local playerResource = entity.get_player_resource();
 local gameRules = entity.get_game_rules();
 local scrW, scrH = client.screen_size();
-local js = panorama.open();
-local MatchInfoAPI = js.MatchInfoAPI;
 local csgo_weapons = require "gamesense/csgo_weapons";
 local images = require "gamesense/images";
 local chatMSG = {};
@@ -20,7 +18,6 @@ local keybindReferences = { {"Fake-Duck", false, ui.reference("rage", "other", "
 local locationControls = {};
 local locationControlsVisible = true;
 local spectatorList = {};
-local keyOverride = true;
 for i = 1, #windows do
     if (not windows[i][6]) then
         table.insert(locationControls, {ui.new_label("LUA", "B", "---- " .. windows[i][1] .. " ----"), ui.new_slider("LUA", "B", windows[i][1] .. " X Axis", 0, scrW, windows[i][2]), ui.new_slider("LUA", "B", windows[i][1] .. " Y Axis", 0, scrH, windows[i][3])});
