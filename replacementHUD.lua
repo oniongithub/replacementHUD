@@ -307,10 +307,10 @@ function drawHitlist()
                 renderer.text(((windows[index][4] / 4 + 5 + windows[index][2]) + (((windows[index][4] / 4) * 3 - 5) / 2)), (22 + (20 * (i - 1))) + 8 + windows[index][3], 255, 255, 255, 255, "c", (windows[index][4] / 4) * 3 - 15, shotLogs[i][3])
                 local avatarIndex = handleAvatars(shotLogs[i][2]);
 
-                if (shotLogs[i][4] == true) then -- T Side
-                    renderer.text(windows[index][2] + ((windows[index][4] / 4) / 2), (22 + (20 * (i - 1))) + 8 + windows[index][3], 255, 114, 43, 255, "c", (windows[index][4] / 4) - 10, shotLogs[i][1])
-                elseif (shotLogs[i][4] == false) then -- CT Side
+                if (shotLogs[i][4] == true) then -- Hit
                     renderer.text(windows[index][2] + ((windows[index][4] / 4) / 2), (22 + (20 * (i - 1))) + 8 + windows[index][3], 43, 223, 255, 255, "c", (windows[index][4] / 4) - 10, shotLogs[i][1])
+                elseif (shotLogs[i][4] == false) then -- Miss
+                    renderer.text(windows[index][2] + ((windows[index][4] / 4) / 2), (22 + (20 * (i - 1))) + 8 + windows[index][3], 125, 125, 125, 255, "c", (windows[index][4] / 4) - 10, shotLogs[i][1])
                 end
 
                 if (avatars[avatarIndex] ~= nil) then
