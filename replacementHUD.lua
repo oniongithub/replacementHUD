@@ -5,15 +5,16 @@ local scrW, scrH = client.screen_size();
 local weapons = require "gamesense/csgo_weapons";
 local images = require "gamesense/images";
 local chatMSG = {};
+local shotLogs = {};
 local avatars = {};
 -- window's usage is {name, x position, y position, width, height, if the window width is changable, min width, max width}
-local windows = { {"watermark", 1660, 10, 250, 20, false }, {"keybinds", 10, 500, 200, 20, true, 100, 350}, {"chatbox", 65, 650, 350, 20, true, 200, 500}, {"spectatorlist", 1710, 500, 200, 20, true, 150, 350}, {"health", 10, 1000, 200, 20, true, 150, 350}, {"weapon", 1710, 1020, 200, 20, true, 100, 350}, {"scoreboard", 835, 35, 250, 20, true, 200, 450}, {"bomb", 810, 1020, 300, 47, true, 150, 500}};
+local windows = { {"watermark", 1660, 10, 250, 20, false }, {"keybinds", 10, 500, 200, 20, true, 100, 350}, {"chatbox", 65, 650, 350, 20, true, 200, 500}, {"spectatorlist", 1710, 500, 200, 20, true, 150, 350}, {"health", 10, 1000, 200, 20, true, 150, 350}, {"weapon", 1710, 1020, 200, 20, true, 100, 350}, {"scoreboard", 835, 35, 250, 20, true, 200, 450}, {"bomb", 810, 1020, 300, 47, true, 150, 500}, {"hitlist", 10, 350, 425, 47, true, 425, 800}};
 local hold = { false, 0, 0, "", 0, 0, 0, 0, true };
 ui.new_label("LUA", "B", "---- Onion's LUA ----");
 ui.new_label("LUA", "B", "Header Color: ");
 local colors = { ui.new_color_picker("LUA", "B", "Header", 200, 103, 245, 255) };
 local keyTable = { {0xBF, "/"}, {0x20, " "}, {0x30, "0"}, {0x31, "1"}, {0x32, "2"}, {0x33, "3"}, {0x34, "4"}, {0x35, "5"}, {0x36, "6"}, {0x37, "7"}, {0x38, "8"}, {0x39, "9"}, {0x41, "A"}, {0x42, "B"}, {0x43, "C"}, {0x44, "D"}, {0x45, "E"}, {0x46, "F"}, {0x47, "G"}, {0x48, "H"}, {0x49, "I"}, {0x4A, "J"}, {0x4B, "K"}, {0x4C, "L"}, {0x4D, "M"}, {0x4E, "N"}, {0x4F, "O"}, {0x50, "P"}, {0x51, "Q"}, {0x52, "R"}, {0x53, "S"}, {0x54, "T"}, {0x55, "U"}, {0x56, "V"}, {0x57, "W"}, {0x58, "X"}, {0x59, "Y"}, {0x5A, "Z"} };
-local controls = { ui.new_checkbox("LUA", "B", "Enabled", true), ui.new_checkbox("LUA", "B", "Override HUD", true), ui.new_checkbox("LUA", "B", "Enable Chat Input", false), ui.new_hotkey("LUA", "B", "Global Chat Key", false, 0x59), ui.new_hotkey("LUA", "B", "Team Chat Key", false, 0x55), ui.new_hotkey("LUA", "B", "Stop Chatting Key", false, 0x12), ui.new_multiselect("LUA", "B", "HUD Features", "Watermark", "Keybinds", "Chatbox", "Weapons", "Health", "Spectator's List", "Scoreboard", "Bomb Timer") };
+local controls = { ui.new_checkbox("LUA", "B", "Enabled", true), ui.new_checkbox("LUA", "B", "Override HUD", true), ui.new_checkbox("LUA", "B", "Enable Chat Input", false), ui.new_hotkey("LUA", "B", "Global Chat Key", false, 0x59), ui.new_hotkey("LUA", "B", "Team Chat Key", false, 0x55), ui.new_hotkey("LUA", "B", "Stop Chatting Key", false, 0x12), ui.new_multiselect("LUA", "B", "HUD Features", "Watermark", "Keybinds", "Chatbox", "Weapons", "Health", "Spectator's List", "Scoreboard", "Bomb Timer", "Hitlist") };
 local keybindReferences = { {"Fake-Duck", false, ui.reference("rage", "other", "duck peek assist")}, {"Thirdperson", true, ui.reference("visuals", "effects", "force third person (alive)")}, {"Double-Tap", true, ui.reference("rage", "other", "double tap")}, {"Hideshots", true, ui.reference("aa", "other", "on shot anti-aim")}, {"LBY Flick", true, ui.reference("aa", "other", "fake peek")}, {"Slowwalk", true, ui.reference("aa", "other", "slow motion")}, {"Force Safe-Point", false, ui.reference("rage", "aimbot", "force safe point")}, {"Force Body-Aim", false, ui.reference("rage", "other", "force body aim")}, {"Blockbot", true, ui.reference("misc", "movement", "blockbot")}, {"Edge-Jump", true, ui.reference("misc", "movement", "jump at edge")}, {"Freecam", false, ui.reference("misc", "miscellaneous", "free look")} };
 local locationControls = {};
 local locationControlsVisible = true;
@@ -164,6 +165,7 @@ client.set_event_callback("paint", function()
         if (tableContains(enabledTable, "Weapons")) then drawWeapon(); end
         if (tableContains(enabledTable, "Scoreboard")) then drawScoreboard(); end
         if (tableContains(enabledTable, "Bomb Timer")) then drawBombtimer(); end
+        if (tableContains(enabledTable, "Hitlist")) then drawHitlist(); end
     end
 end)
 
@@ -283,6 +285,42 @@ function handleSpectators()
     end
 
     spectatorList = cachedSpectators;
+end
+
+function drawHitlist()
+    local index = findWindow("hitlist");
+    if (index == nil) then return end
+
+    renderer.rectangle(windows[index][2], windows[index][3], windows[index][4], 2, ui.get(colors[1]));
+    renderer.rectangle(windows[index][2], 2 + windows[index][3], windows[index][4], 16, 20, 20, 20, 100);
+    renderer.text((windows[index][4] / 2) + windows[index][2], 10 + windows[index][3], 255, 255, 255, 255, "c", 0, "Hitlist")
+    local height = 25;
+
+    if (#shotLogs ~= nil) then
+        height = height + (#shotLogs * 22);
+
+        if (#shotLogs > 0) then
+            for i = 1, #shotLogs do
+                renderer.rectangle(windows[index][2], 22 + (20 * (i - 1)) + windows[index][3], 2, 16, ui.get(colors[1]))
+                renderer.rectangle(2 + windows[index][2], 22 + (20 * (i - 1)) + windows[index][3], windows[index][4] / 4, 16, 20, 20, 20, 100)
+                renderer.rectangle(windows[index][4] / 4 + 5 + windows[index][2], 22 + (20 * (i - 1)) + windows[index][3], (windows[index][4] / 4) * 3 - 5, 16, 20, 20, 20, 100)
+                renderer.text(((windows[index][4] / 4 + 5 + windows[index][2]) + (((windows[index][4] / 4) * 3 - 5) / 2)), (22 + (20 * (i - 1))) + 8 + windows[index][3], 255, 255, 255, 255, "c", (windows[index][4] / 4) * 3 - 15, shotLogs[i][3])
+                local avatarIndex = handleAvatars(shotLogs[i][2]);
+
+                if (shotLogs[i][4] == true) then -- T Side
+                    renderer.text(windows[index][2] + ((windows[index][4] / 4) / 2), (22 + (20 * (i - 1))) + 8 + windows[index][3], 255, 114, 43, 255, "c", (windows[index][4] / 4) - 10, shotLogs[i][1])
+                elseif (shotLogs[i][4] == false) then -- CT Side
+                    renderer.text(windows[index][2] + ((windows[index][4] / 4) / 2), (22 + (20 * (i - 1))) + 8 + windows[index][3], 43, 223, 255, 255, "c", (windows[index][4] / 4) - 10, shotLogs[i][1])
+                end
+
+                if (avatars[avatarIndex] ~= nil) then
+                    if (avatars[avatarIndex][2] ~= nil) then
+                        avatars[avatarIndex][2]:draw(windows[index][2] - 20, 22 + (20 * (i - 1)) + windows[index][3], 16, 16, 255, 255, 255, 255, false, 'f')
+                    end
+                end
+            end
+        end
+    end
 end
 
 function drawSpectatorList()
@@ -586,4 +624,43 @@ client.set_event_callback("player_chat", function(e)
         table.remove(chatMSG, 1);
         table.insert(chatMSG, {e.name, e.text, steamid, teamNum})
     end
+end)
+
+function addShotLog(user, steamid, string, hit) 
+    if (steamid == "" or steamid == nil) then
+        steamid = ""
+    end
+
+    if (#shotLogs < 6) then
+        table.insert(shotLogs, {user, steamid, string, hit})
+    else
+        table.remove(shotLogs, 1);
+        table.insert(shotLogs, {user, steamid, string, hit})
+    end
+end
+
+local hitGroups = {"head", "chest", "stomach", "arms", "arms", "legs", "legs"};
+
+client.set_event_callback('aim_hit', function(e)
+    local damage = e.damage;
+    local hitbox = hitGroups[e.hitgroup];
+    if (hitbox == nil or hitbox == "") then hitbox = "generic"; end
+
+    local target = entity.get_player_name(e.target);
+    local steamID = entity.get_steam64(e.target);
+    local hitchance = math.floor(e.hit_chance);
+
+    addShotLog(target, steamID, "Hit in the " .. hitbox .. " for " .. damage .. "hp with a " .. hitchance .. "% hc.", true);
+end)
+
+client.set_event_callback('aim_miss', function(e)
+    local missReason = e.reason;
+    local hitbox = hitGroups[e.hitgroup];
+    if (hitbox == nil or hitbox == "") then hitbox = "generic"; end
+
+    local target = entity.get_player_name(e.target);
+    local steamID = entity.get_steam64(e.target);
+    local hitchance = math.floor(e.hit_chance);
+
+    addShotLog(target, steamID, "Shot at the " .. hitbox .. " with a " .. hitchance .. "% hc, missed due to " .. missReason .. ".", false);
 end)
