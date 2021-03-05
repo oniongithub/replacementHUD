@@ -1,3 +1,5 @@
+local js = panorama.open();
+local GameStateAPI = js.GameStateAPI;
 local localPlayer = entity.get_local_player();
 local playerResource = entity.get_player_resource();
 local gameRules = entity.get_game_rules();
@@ -27,6 +29,13 @@ for i = 1, #windows do
     end
 end
 local typeHandler = {false, {}, "", false};
+
+local function resetTables()
+    spectatorList = {};
+    chatMSG = {};
+    shotLogs = {};
+    avatars = {};
+end
 
 function findKey(key, inverse)
     for i = 1, #keyTable do
@@ -144,8 +153,8 @@ client.set_event_callback("paint", function()
     localPlayer = entity.get_local_player();
     playerResource = entity.get_player_resource();
     gameRules = entity.get_game_rules();
-    if (localPlayer == nil) then chatMSG = {}; avatars = {}; return end
-
+    if (not localPlayer or localPlayer == nil) then resetTables(); return end
+    
     -- Handle some shit idk
     updateSettings(hold[9])
     handleUI();
@@ -647,7 +656,7 @@ client.set_event_callback('aim_hit', function(e)
     if (hitbox == nil or hitbox == "") then hitbox = "generic"; end
 
     local target = entity.get_player_name(e.target);
-    local steamID = entity.get_steam64(e.target);
+    local steamID = GameStateAPI.GetPlayerXuidStringFromEntIndex(e.target);
     local hitchance = math.floor(e.hit_chance);
 
     addShotLog(target, steamID, "Hit in the " .. hitbox .. " for " .. damage .. "hp with a " .. hitchance .. "% hc.", true);
@@ -659,7 +668,7 @@ client.set_event_callback('aim_miss', function(e)
     if (hitbox == nil or hitbox == "") then hitbox = "generic"; end
 
     local target = entity.get_player_name(e.target);
-    local steamID = entity.get_steam64(e.target);
+    local steamID = GameStateAPI.GetPlayerXuidStringFromEntIndex(e.target);
     local hitchance = math.floor(e.hit_chance);
 
     addShotLog(target, steamID, "Shot at the " .. hitbox .. " with a " .. hitchance .. "% hc, missed due to " .. missReason .. ".", false);
