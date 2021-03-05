@@ -1,5 +1,7 @@
 local js = panorama.open();
 local GameStateAPI = js.GameStateAPI;
+local bit = require "bit"
+local band = bit.band
 local localPlayer = entity.get_local_player();
 local playerResource = entity.get_player_resource();
 local gameRules = entity.get_game_rules();
@@ -657,6 +659,8 @@ client.set_event_callback('aim_hit', function(e)
 
     local target = entity.get_player_name(e.target);
     local steamID = GameStateAPI.GetPlayerXuidStringFromEntIndex(e.target);
+    local flag = entity.get_prop(e.target, "m_fFlags");
+    if (flag and band(flag, 0x200) == 0x200) then steamID = nil; end
     local hitchance = math.floor(e.hit_chance);
 
     addShotLog(target, steamID, "Hit in the " .. hitbox .. " for " .. damage .. "hp with a " .. hitchance .. "% hc.", true);
@@ -669,6 +673,8 @@ client.set_event_callback('aim_miss', function(e)
 
     local target = entity.get_player_name(e.target);
     local steamID = GameStateAPI.GetPlayerXuidStringFromEntIndex(e.target);
+    local flag = entity.get_prop(e.target, "m_fFlags");
+    if (flag and band(flag, 0x200) == 0x200) then steamID = nil; end
     local hitchance = math.floor(e.hit_chance);
 
     addShotLog(target, steamID, "Shot at the " .. hitbox .. " with a " .. hitchance .. "% hc, missed due to " .. missReason .. ".", false);
