@@ -10,7 +10,7 @@ local chatMSG = {};
 local shotLogs = {};
 local avatars = {};
 -- window's usage is {name, x position, y position, width, height, if the window width is changable, min width, max width}
-local windows = { {"watermark", 1660, 10, 250, 20, false }, {"keybinds", 50, 545, 200, 20, true, 100, 350}, {"chatbox", 50, 650, 350, 20, true, 200, 500}, {"spectatorlist", 1710, 500, 200, 20, true, 150, 350}, {"health", 10, 1000, 200, 20, true, 150, 350}, {"weapon", 1710, 1020, 200, 20, true, 100, 350}, {"scoreboard", 835, 35, 250, 20, true, 200, 450}, {"bomb", 810, 1020, 300, 47, true, 150, 500}, {"hitlist", 50, 393, 425, 47, true, 425, 800}};
+local windows = { {"watermark", 1660, 10, 250, 20, false }, {"keybinds", 50, 545, 200, 20, true, 100, 350}, {"chatbox", 50, 650, 350, 20, true, 200, 500}, {"spectatorlist", 1710, 500, 200, 20, true, 150, 350}, {"health", 10, 1000, 200, 20, true, 150, 350}, {"weapon", 1710, 1020, 200, 20, true, 100, 350}, {"scoreboard", 835, 35, 250, 20, true, 200, 450}, {"bomb", 810, 1020, 300, 47, true, 150, 500}, {"hitlist", 1485, 650, 425, 47, true, 425, 800}};
 local hold = { false, 0, 0, "", 0, 0, 0, 0, true };
 ui.new_label("LUA", "B", "---- Onion's LUA ----");
 ui.new_label("LUA", "B", "Header Color: ");
@@ -37,7 +37,7 @@ local function resetTables()
     avatars = {};
 end
 
-function findKey(key, inverse)
+local function findKey(key, inverse)
     for i = 1, #keyTable do
         if (inverse) then
             if (keyTable[2] == key) then
@@ -53,7 +53,7 @@ function findKey(key, inverse)
     return 0;
 end
 
-function swapPostionEdits()
+local function swapPostionEdits()
     for i = 1, #locationControls do
         ui.set_visible(locationControls[i][1], not locationControlsVisible);
         ui.set_visible(locationControls[i][2], not locationControlsVisible);
@@ -67,7 +67,7 @@ function swapPostionEdits()
     locationControlsVisible = not locationControlsVisible;
 end
 
-function updateSettings(saving)
+local function updateSettings(saving)
     for i = 1, #windows do
         if (not saving) then
             windows[i][2], windows[i][3] = ui.get(locationControls[i][2]), ui.get(locationControls[i][3]);
@@ -96,7 +96,7 @@ end
 ui.new_button("LUA", "B", "Toggle Position Settings", swapPostionEdits);
 swapPostionEdits();
 
-function handleText()
+local function handleText()
     if (ui.get(controls[2]) and ui.get(controls[1])) then
         if (ui.get(controls[5]) and not typeHandler[1]) then
             table.insert(typeHandler[2], 0x55);
@@ -220,11 +220,11 @@ function runWindowMovement()
             if (hold[4] == "") then return end            
             local index = findWindow(hold[4])
 
-            if (hold[2] - hold[7] >= 0 and hold[2] - hold[7] <= scrW) then
+            if (hold[2] - hold[7] >= 0 and hold[2] - hold[7] <= scrW - windows[index][4]) then
                 windows[index][2] = hold[2] - hold[7];
             end
 
-            if (hold[3] - hold[8] >= 0 and hold[3] - hold[8] <= scrH) then
+            if (hold[3] - hold[8] >= 0 and hold[3] - hold[8] <= scrH - windows[index][5]) then
                 windows[index][3] = hold[3] - hold[8];
             end
         end
