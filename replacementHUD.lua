@@ -10,7 +10,7 @@ local chatMSG = {};
 local shotLogs = {};
 local avatars = {};
 -- window's usage is {name, x position, y position, width, height, if the window width is changable, min width, max width}
-local windows = { {"watermark", 1660, 10, 250, 20, false }, {"keybinds", 10, 500, 200, 20, true, 100, 350}, {"chatbox", 65, 650, 350, 20, true, 200, 500}, {"spectatorlist", 1710, 500, 200, 20, true, 150, 350}, {"health", 10, 1000, 200, 20, true, 150, 350}, {"weapon", 1710, 1020, 200, 20, true, 100, 350}, {"scoreboard", 835, 35, 250, 20, true, 200, 450}, {"bomb", 810, 1020, 300, 47, true, 150, 500}, {"hitlist", 10, 350, 425, 47, true, 425, 800}};
+local windows = { {"watermark", 1660, 10, 250, 20, false }, {"keybinds", 50, 545, 200, 20, true, 100, 350}, {"chatbox", 50, 650, 350, 20, true, 200, 500}, {"spectatorlist", 1710, 500, 200, 20, true, 150, 350}, {"health", 10, 1000, 200, 20, true, 150, 350}, {"weapon", 1710, 1020, 200, 20, true, 100, 350}, {"scoreboard", 835, 35, 250, 20, true, 200, 450}, {"bomb", 810, 1020, 300, 47, true, 150, 500}, {"hitlist", 50, 393, 425, 47, true, 425, 800}};
 local hold = { false, 0, 0, "", 0, 0, 0, 0, true };
 ui.new_label("LUA", "B", "---- Onion's LUA ----");
 ui.new_label("LUA", "B", "Header Color: ");
