@@ -273,13 +273,9 @@ function handleUI()
     if (ui.get(controls[2]) and ui.get(controls[1])) then
         cvar.cl_draw_only_deathnotices:set_int(1)
         cvar.cl_drawhud_force_radar:set_int(1)
-        client.exec("unbind y")
-        client.exec("unbind u")
     else
         cvar.cl_draw_only_deathnotices:set_int(0)
         cvar.cl_drawhud_force_radar:set_int(0)
-        client.exec("bind y messagemode")
-        client.exec("bind u messagemode2")
     end
 end
 
@@ -529,6 +525,8 @@ function drawChatbox()
                 end
             end
         end
+    else
+        hudChat.isChatOpen = false;
     end
 
     windows[index][5] = height;
