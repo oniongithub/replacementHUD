@@ -4,8 +4,9 @@ local localPlayer = entity.get_local_player();
 local playerResource = entity.get_player_resource();
 local gameRules = entity.get_game_rules();
 local scrW, scrH = client.screen_size();
-local weapons = require "gamesense/csgo_weapons";
-local images = require "gamesense/images";
+local weapons = require("gamesense/csgo_weapons");
+local images = require("gamesense/images");
+ffi = require("ffi")
 local chatMSG = {};
 local shotLogs = {};
 local avatars = {};
@@ -29,6 +30,39 @@ for i = 1, #windows do
     end
 end
 local typeHandler = {false, {}, "", false};
+ 
+-- Koby on forums https://gamesense.pub/forums/viewtopic.php?id=21674
+ffi.cdef[[ 
+        typedef void***(__thiscall* FindHudElement_t)(void*, const char*); 
+        typedef struct { 
+            char pad[0x58];
+            bool isChatOpen;
+        } CCSGO_HudChat;
+]]
+
+    local signature_gHud = "\xB9\xCC\xCC\xCC\xCC\x88\x46\x09"
+    local signature_FindElement = "\x55\x8B\xEC\x53\x8B\x5D\x08\x56\x57\x8B\xF9\x33\xF6\x39\x77\x28"
+
+    local match = client.find_signature("client.dll", signature_gHud) or error("sig1 not found")
+    local char_match = ffi.cast("char*", match) + 1
+    local hud = ffi.cast("void**", char_match)[0] or error("hud is nil")
+    local match = client.find_signature("client.dll", signature_FindElement) or error("FindHudElement not found")
+    local find_hud_element = ffi.cast("FindHudElement_t", match)
+    local hudElement = find_hud_element(hud, "CCSGO_HudChat") or error("CCSGO_HudChat not found")
+    local hudChat
+    if (hudElement ~= nil) then
+        hudChat = ffi.cast("CCSGO_HudChat*", hudElement)
+    end
+
+function initHudChat()
+    hudElement = find_hud_element(hud, "CCSGO_HudChat") or error("CCSGO_HudChat not found")
+    if (hudElement ~= nil) then
+        hudChat = ffi.cast("CCSGO_HudChat*", hudElement)
+    end
+end
+
+client.set_event_callback("player_connect_full", initHudChat);
+-- ================================================================================
 
 local function resetTables()
     spectatorList = {};
@@ -118,25 +152,27 @@ local function handleText()
         end
 
         if (not ui.get(controls[6])) then
-            if (typeHandler[1]) then
-                for i = 1, #typeHandler[2] do
-                    if (typeHandler[2][i] ~= nil) then
-                        if (not client.key_state(typeHandler[2][i])) then
-                            table.remove(typeHandler[2], i);
+            if (not ui.is_menu_open()) then
+                if (typeHandler[1]) then
+                    for i = 1, #typeHandler[2] do
+                        if (typeHandler[2][i] ~= nil) then
+                            if (not client.key_state(typeHandler[2][i])) then
+                                table.remove(typeHandler[2], i);
+                            end
                         end
                     end
-                end
 
-                for i = 1, #keyTable do
-                    if (client.key_state(keyTable[i][1])) then
-                        if (not tableContains(typeHandler[2], keyTable[i][1])) then
-                            if (client.key_state(0xA0)) then
-                                typeHandler[3] = typeHandler[3] .. keyTable[i][2]
-                            else
-                                typeHandler[3] = typeHandler[3] .. string.lower(keyTable[i][2]);
+                    for i = 1, #keyTable do
+                        if (client.key_state(keyTable[i][1])) then
+                            if (not tableContains(typeHandler[2], keyTable[i][1])) then
+                                if (client.key_state(0xA0)) then
+                                    typeHandler[3] = typeHandler[3] .. keyTable[i][2]
+                                else
+                                    typeHandler[3] = typeHandler[3] .. string.lower(keyTable[i][2]);
+                                end
+
+                                table.insert(typeHandler[2], keyTable[i][1])
                             end
-
-                            table.insert(typeHandler[2], keyTable[i][1])
                         end
                     end
                 end
@@ -462,33 +498,35 @@ function drawChatbox()
         end
     end
 
-    if (ui.get(controls[3])) then
-        if (typeHandler[1]) then
-            renderer.rectangle(windows[index][2], windows[index][3] + height + 5, 2, 16, ui.get(colors[1]))
-            renderer.rectangle(2 + windows[index][2], windows[index][3] + height + 5, windows[index][4] / 4, 16, 20, 20, 20, 100)
-            renderer.rectangle(windows[index][4] / 4 + 5 + windows[index][2], windows[index][3] + height + 5, (windows[index][4] / 4) * 3 - 5, 16, 20, 20, 20, 100)
+    if (hudChat ~= nil and hudChat.isChatOpen == false) then
+        if (ui.get(controls[3])) then
+            if (typeHandler[1]) then
+                renderer.rectangle(windows[index][2], windows[index][3] + height + 5, 2, 16, ui.get(colors[1]))
+                renderer.rectangle(2 + windows[index][2], windows[index][3] + height + 5, windows[index][4] / 4, 16, 20, 20, 20, 100)
+                renderer.rectangle(windows[index][4] / 4 + 5 + windows[index][2], windows[index][3] + height + 5, (windows[index][4] / 4) * 3 - 5, 16, 20, 20, 20, 100)
 
-            if (typeHandler[4]) then
-                renderer.text(2 + windows[index][2] + ((windows[index][4] / 4) / 2), windows[index][3] + height + 14, 255, 255, 255, 255, "c", 0, "Global")
-            else
-                renderer.text(2 + windows[index][2] + ((windows[index][4] / 4) / 2), windows[index][3] + height + 14, 255, 255, 255, 255, "c", 0, "Team")
-            end
-
-            if (client.key_state(0x0D)) then
-                if (typeHandler[3] ~= "" and typeHandler[3] ~= nil) then
-                    if (typeHandler[4]) then
-                        client.exec("say " .. typeHandler[3]);
-                    else
-                        client.exec("say_team " .. typeHandler[3]);
-                    end
+                if (typeHandler[4]) then
+                    renderer.text(2 + windows[index][2] + ((windows[index][4] / 4) / 2), windows[index][3] + height + 14, 255, 255, 255, 255, "c", 0, "Global")
+                else
+                    renderer.text(2 + windows[index][2] + ((windows[index][4] / 4) / 2), windows[index][3] + height + 14, 255, 255, 255, 255, "c", 0, "Team")
                 end
 
-                typeHandler[1], typeHandler[2], typeHandler[3], typeHandler[4] = false, {}, "", false;
-            end
+                if (client.key_state(0x0D)) then
+                    if (typeHandler[3] ~= "" and typeHandler[3] ~= nil) then
+                        if (typeHandler[4]) then
+                            client.exec("say " .. typeHandler[3]);
+                        else
+                            client.exec("say_team " .. typeHandler[3]);
+                        end
+                    end
 
-            if (typeHandler[3] ~= "" and typeHandler[3] ~= nil) then
-                local textW, textH = renderer.measure_text("", typeHandler[3]);
-                renderer.text(7 + windows[index][2] + (windows[index][4] / 4) + (((windows[index][4] / 4) * 3) / 2), windows[index][3] + height + 14, 255, 255, 255, 255, "c", ((windows[index][4] / 4) * 3) - 10, typeHandler[3])
+                    typeHandler[1], typeHandler[2], typeHandler[3], typeHandler[4] = false, {}, "", false;
+                end
+
+                if (typeHandler[3] ~= "" and typeHandler[3] ~= nil) then
+                    local textW, textH = renderer.measure_text("", typeHandler[3]);
+                    renderer.text(7 + windows[index][2] + (windows[index][4] / 4) + (((windows[index][4] / 4) * 3) / 2), windows[index][3] + height + 14, 255, 255, 255, 255, "c", ((windows[index][4] / 4) * 3) - 10, typeHandler[3])
+                end
             end
         end
     end
@@ -650,7 +688,7 @@ end
 
 local hitGroups = {"head", "chest", "stomach", "arms", "arms", "legs", "legs"};
 
-client.set_event_callback('aim_hit', function(e)
+client.set_event_callback("aim_hit", function(e)
     local damage = e.damage; local steamID;
     local hitbox = hitGroups[e.hitgroup];
     if (hitbox == nil or hitbox == "") then hitbox = "generic"; end
@@ -662,7 +700,7 @@ client.set_event_callback('aim_hit', function(e)
     addShotLog(target, steamID, "Hit in the " .. hitbox .. " for " .. damage .. "hp with a " .. hitchance .. "% hc.", true);
 end)
 
-client.set_event_callback('aim_miss', function(e)
+client.set_event_callback("aim_miss", function(e)
     local missReason = e.reason; local steamID;
     local hitbox = hitGroups[e.hitgroup];
     if (hitbox == nil or hitbox == "") then hitbox = "generic"; end
@@ -672,4 +710,28 @@ client.set_event_callback('aim_miss', function(e)
     local hitchance = math.floor(e.hit_chance);
 
     addShotLog(target, steamID, "Shot at the " .. hitbox .. " with a " .. hitchance .. "% hc, missed due to " .. missReason .. ".", false);
+end)
+
+client.set_event_callback("setup_command", function(cmd)
+    if (typeHandler[1]) then 
+        cmd.in_attack = false;
+        cmd.in_attack2 = false;
+        cmd.in_forward = false;
+        cmd.in_back = false;
+        cmd.in_moveleft = false;
+        cmd.in_moveright = false;
+        cmd.in_jump = false;
+        cmd.in_use = false;
+        cmd.in_walk = false;
+        cmd.in_run = false;
+        cmd.sidemove = 0;
+        cmd.forwardmove = 0;
+        cmd.in_reload = false;
+        cmd.in_duck = false;
+        cmd.in_cancel = false;
+        cmd.in_score = false;
+        cmd.in_grenade1 = false;
+        cmd.in_grenade2 = false;
+        cmd.in_attack3 = false;
+    end
 end)
